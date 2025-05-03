@@ -1,4 +1,4 @@
-export type ListType = 'singly' | 'doubly' | 'circular';
+export type ListType = 'singly' | 'doubly' | 'circular' | 'doubly-circular';
 
 export interface Node {
   value: number;

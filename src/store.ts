@@ -8,16 +8,18 @@ const createInitialNodes = (type: ListType): Node[] => {
     value: i + 1,
     address: generateAddress(),
     next: null,
-    prev: type === 'doubly' ? null : undefined
+    prev: type === 'doubly' || type === 'doubly-circular' ? null : undefined
   }));
 
   // Link the nodes
   for (let i = 0; i < nodes.length; i++) {
     const nextIndex = (i + 1) % nodes.length;
-    nodes[i].next = type === 'circular' || i < nodes.length - 1 ? nodes[nextIndex].address : null;
+    const isCircular = type === 'circular' || type === 'doubly-circular';
+    nodes[i].next = isCircular || i < nodes.length - 1 ? nodes[nextIndex].address : null;
     
-    if (type === 'doubly') {
-      nodes[i].prev = i > 0 ? nodes[i - 1].address : null;
+    if (type === 'doubly' || type === 'doubly-circular') {
+      const prevIndex = (i - 1 + nodes.length) % nodes.length;
+      nodes[i].prev = isCircular || i > 0 ? nodes[prevIndex].address : null;
     }
   }
 
@@ -63,15 +65,17 @@ export const useListStore = create<ListState>((set, get) => ({
     set(state => {
       const newAddress = generateAddress();
       const newValue = state.nodes.length + 1;
+      const isCircular = state.listType === 'circular' || state.listType === 'doubly-circular';
       
       const newNode: Node = {
         value: newValue,
         address: newAddress,
-        next: state.listType === 'circular' ? state.nodes[0]?.address || null : null,
-        prev: state.listType === 'doubly' ? state.nodes[state.nodes.length - 1]?.address || null : undefined
+        next: isCircular ? state.nodes[0]?.address || null : null,
+        prev: (state.listType === 'doubly' || state.listType === 'doubly-circular') 
+          ? state.nodes[state.nodes.length - 1]?.address || null 
+          : undefined
       };
 
-      // Start traversal from the beginning
       const traversalTimer = setInterval(() => {
         const { currentIndex, nodes } = get();
         
@@ -95,14 +99,14 @@ export const useListStore = create<ListState>((set, get) => ({
               const lastNode = updatedNodes[updatedNodes.length - 1];
               lastNode.next = newNode.address;
               
-              if (state.listType === 'doubly') {
+              if (state.listType === 'doubly' || state.listType === 'doubly-circular') {
                 newNode.prev = lastNode.address;
               }
             }
 
-            if (state.listType === 'circular' && updatedNodes.length === 0) {
+            if (isCircular && updatedNodes.length === 0) {
               newNode.next = newNode.address;
-              if (state.listType === 'doubly') {
+              if (state.listType === 'doubly-circular') {
                 newNode.prev = newNode.address;
               }
             }
@@ -127,23 +131,43 @@ export const useListStore = create<ListState>((set, get) => ({
     });
   },
 
-  removeNode: () => {
+  removeNode: (position: number) => {
     set(state => {
-      if (state.nodes.length <= 1) {
+      if (state.nodes.length === 0) {
         return {
           operationLog: "Cannot remove node from empty list"
         };
       }
 
-      const updatedNodes = state.nodes.slice(0, -1);
-      if (updatedNodes.length > 0) {
-        const lastNode = updatedNodes[updatedNodes.length - 1];
-        lastNode.next = state.listType === 'circular' ? updatedNodes[0].address : null;
+      if (position < 0 || position >= state.nodes.length) {
+        return {
+          operationLog: `Invalid position: ${position}`
+        };
       }
+
+      const updatedNodes = [...state.nodes];
+      const removedNode = updatedNodes[position];
+      const isCircular = state.listType === 'circular' || state.listType === 'doubly-circular';
+      const isDoubly = state.listType === 'doubly' || state.listType === 'doubly-circular';
+
+      // Update connections
+      if (updatedNodes.length > 1) {
+        const prevNode = position > 0 ? updatedNodes[position - 1] : isCircular ? updatedNodes[updatedNodes.length - 1] : null;
+        const nextNode = position < updatedNodes.length - 1 ? updatedNodes[position + 1] : isCircular ? updatedNodes[0] : null;
+
+        if (prevNode) {
+          prevNode.next = nextNode ? nextNode.address : isCircular ? updatedNodes[0].address : null;
+        }
+        if (nextNode && isDoubly) {
+          nextNode.prev = prevNode ? prevNode.address : isCircular ? updatedNodes[updatedNodes.length - 2].address : null;
+        }
+      }
+
+      updatedNodes.splice(position, 1);
 
       return {
         nodes: updatedNodes,
-        operationLog: `Removed last node`
+        operationLog: `Removed node with value ${removedNode.value} at position ${position}`
       };
     });
   },
@@ -157,14 +181,16 @@ export const useListStore = create<ListState>((set, get) => ({
       }
 
       const newAddress = generateAddress();
+      const isCircular = state.listType === 'circular' || state.listType === 'doubly-circular';
+      const isDoubly = state.listType === 'doubly' || state.listType === 'doubly-circular';
+
       const newNode: Node = {
         value,
         address: newAddress,
         next: position < state.nodes.length ? state.nodes[position].address : null,
-        prev: state.listType === 'doubly' ? (position > 0 ? state.nodes[position - 1].address : null) : undefined
+        prev: isDoubly ? (position > 0 ? state.nodes[position - 1].address : null) : undefined
       };
 
-      // Start traversal animation
       const traversalTimer = setInterval(() => {
         const { currentIndex, nodes } = get();
         
@@ -187,23 +213,23 @@ export const useListStore = create<ListState>((set, get) => ({
             
             if (position > 0) {
               updatedNodes[position - 1].next = newNode.address;
-              if (state.listType === 'doubly') {
+              if (isDoubly) {
                 newNode.prev = updatedNodes[position - 1].address;
               }
             }
 
             if (position < updatedNodes.length) {
               newNode.next = updatedNodes[position].address;
-              if (state.listType === 'doubly') {
+              if (isDoubly) {
                 updatedNodes[position].prev = newNode.address;
               }
             }
 
             updatedNodes.splice(position, 0, newNode);
 
-            if (state.listType === 'circular') {
+            if (isCircular) {
               updatedNodes[updatedNodes.length - 1].next = updatedNodes[0].address;
-              if (state.listType === 'doubly') {
+              if (isDoubly) {
                 updatedNodes[0].prev = updatedNodes[updatedNodes.length - 1].address;
               }
             }
@@ -244,7 +270,8 @@ export const useListStore = create<ListState>((set, get) => ({
         node => node.address === state.nodes[state.currentIndex!].next
       );
 
-      if (nextNodeIndex === -1 || (!state.nodes[state.currentIndex].next && state.listType !== 'circular')) {
+      const isCircular = state.listType === 'circular' || state.listType === 'doubly-circular';
+      if (nextNodeIndex === -1 || (!state.nodes[state.currentIndex].next && !isCircular)) {
         return {
           currentIndex: null,
           isPlaying: false,

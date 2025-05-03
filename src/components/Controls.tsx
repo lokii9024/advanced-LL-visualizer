@@ -7,7 +7,7 @@ interface ControlsProps {
   onPlayPause: () => void;
   onReset: () => void;
   onAdd: () => void;
-  onRemove: () => void;
+  onRemove: (position: number) => void;
   onInsert: (position: number, value: number) => void;
   onTypeChange: (type: ListType) => void;
   listType: ListType;
@@ -25,6 +25,7 @@ const Controls: React.FC<ControlsProps> = ({
 }) => {
   const [insertPosition, setInsertPosition] = useState(0);
   const [insertValue, setInsertValue] = useState(0);
+  const [removePosition, setRemovePosition] = useState(0);
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-6 space-y-6">
@@ -32,8 +33,8 @@ const Controls: React.FC<ControlsProps> = ({
       
       <div className="bg-gray-50 p-4 rounded-lg mb-6">
         <h3 className="text-lg font-medium mb-3">List Type</h3>
-        <div className="flex gap-4">
-          {(['singly', 'doubly', 'circular'] as ListType[]).map((type) => (
+        <div className="flex flex-wrap gap-4">
+          {(['singly', 'doubly', 'circular', 'doubly-circular'] as ListType[]).map((type) => (
             <button
               key={type}
               onClick={() => onTypeChange(type)}
@@ -72,13 +73,6 @@ const Controls: React.FC<ControlsProps> = ({
           <Plus size={20} />
           Add at End
         </button>
-        <button
-          onClick={onRemove}
-          className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm"
-        >
-          <Minus size={20} />
-          Remove Last
-        </button>
       </div>
       
       <div className="bg-gray-50 p-5 rounded-lg shadow-inner">
@@ -109,6 +103,29 @@ const Controls: React.FC<ControlsProps> = ({
           >
             <ArrowDown size={20} />
             Insert
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-gray-50 p-5 rounded-lg shadow-inner">
+        <h3 className="text-lg font-medium mb-3 text-gray-700">Remove at Position</h3>
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">Position:</label>
+            <input
+              type="number"
+              min="0"
+              value={removePosition}
+              onChange={(e) => setRemovePosition(Number(e.target.value))}
+              className="w-20 px-3 py-2 border rounded-md shadow-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <button
+            onClick={() => onRemove(removePosition)}
+            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm"
+          >
+            <Minus size={20} />
+            Remove
           </button>
         </div>
       </div>
