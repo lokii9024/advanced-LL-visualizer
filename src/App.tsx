@@ -303,7 +303,7 @@ public:
                   <strong>Node Values:</strong>
                   <ul className="list-disc ml-4 mt-1">
                     <li>Only positive integers are supported (0 to 999)</li>
-                    <li>No floating-point numbers, strings, or complex data types</li>
+                    <li>No strings, or complex data types</li>
                     {/* <li>Each value must be unique within the list</li> */}
                   </ul>
                 </div>
@@ -311,7 +311,6 @@ public:
                   <strong>List Operations:</strong>
                   <ul className="list-disc ml-4 mt-1">
                     <li>Maximum of 10 nodes for optimal visualization</li>
-                    <li>Insert operations limited to existing node positions</li>
                     <li>No duplicate addresses allowed</li>
                     <li>Fixed traversal speed of 1 second per node</li>
                   </ul>
