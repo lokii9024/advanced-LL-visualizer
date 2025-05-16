@@ -92,6 +92,8 @@ const Controls: React.FC<ControlsProps> = ({
             <label className="text-sm font-medium text-gray-700">Value:</label>
             <input
               type="number"
+              min={0}
+              max={999}
               value={insertValue}
               onChange={(e) => setInsertValue(Number(e.target.value))}
               className="w-20 px-3 py-2 border rounded-md shadow-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"

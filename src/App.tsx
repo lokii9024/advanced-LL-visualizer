@@ -304,7 +304,7 @@ public:
                   <ul className="list-disc ml-4 mt-1">
                     <li>Only positive integers are supported (0 to 999)</li>
                     <li>No floating-point numbers, strings, or complex data types</li>
-                    <li>Each value must be unique within the list</li>
+                    {/* <li>Each value must be unique within the list</li> */}
                   </ul>
                 </div>
                 <div>
